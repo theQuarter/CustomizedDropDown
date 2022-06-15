@@ -1,0 +1,144 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:yct_books/Controller/book_order_controller.dart';
+import 'package:yct_books/Models/responce/state_model.dart';
+
+class Dropdown extends StatefulWidget {
+  final bool stateSelect;
+  const Dropdown({Key? key, required this.stateSelect}) : super(key: key);
+
+  @override
+  State<Dropdown> createState() => _DropdownState();
+}
+
+class _DropdownState extends State<Dropdown> {
+  List<StateModel> citys = [];
+  List<StateModel> searchList = [];
+  String selectText = "";
+  TextEditingController search = TextEditingController();
+  bool textFieldActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.stateSelect == true) {
+      Get.find<BooksOrderController>().getAllState();
+      citys = Get.find<BooksOrderController>().allStates;
+    } else {
+      citys = Get.find<BooksOrderController>().cities;
+    }
+  }
+
+  searchText() {
+    searchList.clear();
+    String query = search.text;
+    for (var element in citys) {
+      if (element.name.toLowerCase().contains(query.toLowerCase())) {
+        searchList.add(element);
+      }
+    }
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.orange,
+        title: TextField(
+          onChanged: (value) {
+            if (search.text.isNotEmpty) {
+              // setState(() {
+              textFieldActive = true;
+              // });
+            } else {
+              // setState(() {
+              textFieldActive = false;
+              // });
+            }
+            searchText();
+          },
+          controller: search,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: widget.stateSelect == true
+                ? "Click to search states"
+                : "Click to search Cities",
+            hintStyle: GoogleFonts.montserrat(
+                textStyle: const TextStyle(fontSize: 16, color: Colors.white)),
+            border: InputBorder.none,
+          ),
+        ),
+        // leading: Padding(
+        //   padding: const EdgeInsets.symmetric(vertical: 13),
+        //   child: GestureDetector(
+        //       onTap: () {
+        //         Navigator.pop(context);
+        //       },
+        //       child: Image.asset("assets/icons/Arrow_circle.png")),
+        // ),
+        actions: [
+          Visibility(
+            visible: textFieldActive,
+            child: Padding(
+              padding: const EdgeInsets.all(13),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    textFieldActive = false;
+                    search.clear();
+                  });
+                },
+                child: Image.asset(
+                  "assets/icons/CloseSquare.png",
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
+      body: SizedBox(
+        height: size.height,
+        child: ListView.builder(
+          itemCount: (searchList.isEmpty && search.text.isNotEmpty)
+              ? 1
+              : searchList.isEmpty
+                  ? citys.length
+                  : searchList.length,
+          itemBuilder: (context, index) {
+            if (searchList.isEmpty && search.text.isNotEmpty) {
+              return const Text("EMPTY");
+            }
+            StateModel data = (searchList.isEmpty && search.text.isEmpty)
+                ? citys[index]
+                : searchList[index];
+            return citys.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context, data);
+                      },
+                      child: Text(data.name,
+                          style: GoogleFonts.montserrat(
+                            textStyle: const TextStyle(
+                              color: Color(0xff2c2c2c),
+                              fontSize: 16,
+                              fontFamily: "Montserrat",
+                              fontWeight: FontWeight.w400,
+                            ),
+                          )),
+                    ),
+                  );
+          },
+        ),
+      ),
+    );
+  }
+}
